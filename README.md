@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+# file-management-system
+>>>>>>> c43f148c89d4d582c4318b03eeb2938d4ae94e46
 # Cloud Drive (File Management System)
 
 A modern, highly secure, and stateless file management web application designed to behave like a lightweight Google Drive. Built with a Node.js backend, this platform securely encrypts files on the fly and stores them directly into a MongoDB database using GridFS, making it 100% ready for scalable cloud deployments.
@@ -65,4 +69,8 @@ This project is configured to be instantly deployed to modern cloud providers li
 3. The host will automatically detect the `start` script in the `package.json` and deploy your app safely.
 
 ## 📄 License
+<<<<<<< HEAD
 This project is open-source and available under the ISC License.
+=======
+This project is open-source and available under the ISC License.
+>>>>>>> c43f148c89d4d582c4318b03eeb2938d4ae94e46
