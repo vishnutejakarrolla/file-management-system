@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Drive - Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">
+                <i class="fas fa-cloud"></i> Cloud Drive
+            </div>
+            
+            <nav>
+                <a href="#" class="nav-item active"><i class="fas fa-hdd"></i> My Drive</a>
+                <a href="#" class="nav-item"><i class="fas fa-share-alt"></i> Shared with me</a>
+                <a href="#" class="nav-item"><i class="fas fa-clock"></i> Recent</a>
+                <a href="#" class="nav-item"><i class="fas fa-star"></i> Starred</a>
+                <a href="#" class="nav-item"><i class="fas fa-trash"></i> Trash</a>
+            </nav>
+            
+            <div class="storage-dashboard">
+                <h4>Storage</h4>
+                <div class="storage-stats">
+                    <div class="stat-row">
+                        <span class="stat-label">Used</span>
+                        <span class="stat-value" id="storageUsed">0 B</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Total Files</span>
+                        <span class="stat-value" id="totalFiles">0</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            
+            <!-- Top Navbar -->
+            <header class="top-navbar">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search in Drive...">
+                </div>
+                
+                <div class="user-controls">
+                    <button class="btn-icon" id="themeToggle"><i class="fas fa-moon"></i></button>
+                    <div class="user-profile">
+                        <div class="avatar" id="userAvatar">U</div>
+                        <span id="welcomeUser">User</span>
+                        <button class="btn-icon" id="logoutBtn" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- File Area -->
+            <div class="file-area">
+                <div class="section-header">
+                    <h2 id="currentPath">My Drive</h2>
+                    <div class="actions">
+                        <button class="btn btn-primary" id="newTextBtn" style="background: var(--accent-color);">
+                            <i class="fas fa-file-alt"></i> New Text File
+                        </button>
+                        <button class="btn btn-primary" id="newFolderBtn">
+                            <i class="fas fa-folder-plus"></i> New Folder
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Copy Bar -->
+                <div class="extras-bar" style="display: flex; gap: 1rem; margin-bottom: 1.5rem; background: var(--input-bg); padding: 1rem; border-radius: var(--border-radius); border: 1px solid var(--panel-border);">
+                    <input type="text" id="inlineCopySource" placeholder="From file (e.g. file.txt)" style="flex: 1; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--panel-border); background: var(--input-bg); color: var(--text-primary); outline: none;">
+                    <input type="text" id="inlineCopyTarget" placeholder="To file (e.g. test.txt)" style="flex: 1; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--panel-border); background: var(--input-bg); color: var(--text-primary); outline: none;">
+                    <button class="btn btn-primary" id="inlineCopyBtn" style="width: auto; padding: 0.6rem 1.5rem;"><i class="fas fa-copy"></i> Copy</button>
+                </div>
+                
+                <!-- Dropzone -->
+                <div class="dropzone" id="dropzone">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <h3>Drag & Drop files here</h3>
+                    <p>Or click to browse</p>
+                    <input type="file" id="fileInput" style="display: none;" multiple>
+                    <div class="progress-container" id="progressContainer">
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+                </div>
+
+                <!-- File Grid -->
+                <div class="file-grid" id="fileGrid">
+                    <!-- Dynamic Files will be rendered here -->
+                </div>
+            </div>
+            
+        </main>
+    </div>
+    
+    <!-- New Folder Modal -->
+    <div class="modal-overlay" id="folderModal">
+        <div class="modal">
+            <h3>Create New Folder</h3>
+            <div class="input-group">
+                <input type="text" id="folderNameInput" placeholder="Folder Name">
+            </div>
+            <div class="modal-actions">
+                <button class="btn" id="cancelFolderBtn">Cancel</button>
+                <button class="btn btn-primary" id="confirmFolderBtn">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Text Editor Modal -->
+    <div class="modal-overlay" id="editorModal">
+        <div class="modal" style="width: 600px;">
+            <h3 id="editorTitle">Edit Text File</h3>
+            <div class="input-group">
+                <input type="text" id="editorFilename" placeholder="filename.txt">
+            </div>
+            <div class="input-group">
+                <textarea id="editorContent" rows="15" placeholder="Write something..." style="width: 100%; padding: 1rem; background: var(--input-bg); border: 1px solid var(--panel-border); border-radius: var(--border-radius); color: var(--text-primary); resize: vertical; outline: none;"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" id="cancelEditorBtn">Cancel</button>
+                <button class="btn btn-primary" id="saveEditorBtn">Save File</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div class="modal-overlay" id="shareModal">
+        <div class="modal">
+            <h3>Share Item</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;" id="shareItemName"></p>
+            <div class="input-group">
+                <input type="text" id="shareTargetUser" placeholder="Enter target username">
+            </div>
+            <div class="modal-actions">
+                <button class="btn" id="cancelShareBtn">Cancel</button>
+                <button class="btn btn-primary" id="confirmShareBtn">Share</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Copy Modal -->
+    <div class="modal-overlay" id="copyModal">
+        <div class="modal">
+            <h3>Copy Item</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;" id="copyItemName"></p>
+            <div class="input-group">
+                <input type="text" id="copyTargetName" placeholder="Enter new item name or path">
+            </div>
+            <div class="modal-actions">
+                <button class="btn" id="cancelCopyBtn">Cancel</button>
+                <button class="btn btn-primary" id="confirmCopyBtn">Copy</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
