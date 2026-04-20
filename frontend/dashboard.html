@@ -13,7 +13,8 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="brand">
-                <i class="fas fa-cloud"></i> Cloud Drive
+                <span><i class="fas fa-cloud"></i> Cloud Drive</span>
+                <button class="btn-icon mobile-toggle" id="closeSidebar" style="display: none;"><i class="fas fa-times"></i></button>
             </div>
             
             <nav>
@@ -44,6 +45,7 @@
             
             <!-- Top Navbar -->
             <header class="top-navbar">
+                <button class="btn-icon mobile-toggle" id="mobileToggle"><i class="fas fa-bars"></i></button>
                 <div class="search-bar">
                     <i class="fas fa-search"></i>
                     <input type="text" id="searchInput" placeholder="Search in Drive...">

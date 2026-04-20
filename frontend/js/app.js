@@ -5,8 +5,11 @@ let currentFolder = '';
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
     const username = localStorage.getItem('username');
+    console.log('Dashboard Init - Token present:', !!token);
+    console.log('Dashboard Init - Username:', username);
     
     if (!token) {
+        console.warn('Dashboard: No token found. Redirecting to index.html');
         window.location.href = 'index.html';
         return;
     }
@@ -225,6 +228,32 @@ document.addEventListener('DOMContentLoaded', () => {
     navItems[2].addEventListener('click', () => switchTab('recent'));
     navItems[3].addEventListener('click', () => switchTab('starred'));
     navItems[4].addEventListener('click', () => switchTab('trash'));
+
+    // Mobile Sidebar Toggle
+    const mobileToggle = document.getElementById('mobileToggle');
+    const closeSidebar = document.getElementById('closeSidebar');
+    const sidebar = document.querySelector('.sidebar');
+
+    if (mobileToggle) {
+        mobileToggle.addEventListener('click', () => {
+            sidebar.classList.add('active');
+        });
+    }
+
+    if (closeSidebar) {
+        closeSidebar.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+        });
+    }
+
+    // Close sidebar on navigation on mobile
+    navItems.forEach(item => {
+        item.addEventListener('click', () => {
+            if (window.innerWidth <= 768) {
+                sidebar.classList.remove('active');
+            }
+        });
+    });
 });
 
 // Notifications
@@ -266,7 +295,9 @@ async function loadFiles() {
         });
         
         if (!res.ok) {
+            console.error('File list fetch failed. Status:', res.status);
             if(res.status === 401 || res.status === 403) {
+                console.warn('Dashboard: Unauthorized access (401/403). Clearing storage and redirecting.');
                 localStorage.clear();
                 window.location.href = 'index.html';
                 return;

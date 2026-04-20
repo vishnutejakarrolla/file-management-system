@@ -8,13 +8,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const authBtn = document.getElementById('authBtn');
     const switchText = document.getElementById('switchText');
     const notificationContainer = document.getElementById('notificationContainer');
-    
+
     let isLogin = true;
 
     // Check if already logged in
     const token = localStorage.getItem('token');
-    if (token) {
-        window.location.href = 'dashboard.html';
+
+    // Safety check for token validity strings
+    const hasValidToken = token && token !== 'undefined' && token !== 'null';
+
+    // If we are on a page with the login form but we already have a token, go to dashboard
+    if (hasValidToken && authForm) {
+        const path = window.location.pathname;
+        const isLoginPage = path === '/' || path.endsWith('index.html') || path === '';
+                            
+        if (isLoginPage) {
+            console.log('User is logged in, redirecting to dashboard...');
+            window.location.replace('dashboard.html');
+            return;
+        }
     }
 
     const showNotification = (msg, type = 'success') => {
@@ -22,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         notif.className = `notification ${type}`;
         notif.innerText = msg;
         notificationContainer.appendChild(notif);
-        
+
         setTimeout(() => {
             notif.style.animation = 'fadeOut 0.3s forwards';
             setTimeout(() => notif.remove(), 300);
@@ -32,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     switchLink.addEventListener('click', (e) => {
         e.preventDefault();
         isLogin = !isLogin;
-        
+
         if (isLogin) {
             authSubtitle.innerText = 'Sign in to your account';
             authBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
@@ -50,24 +62,25 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
-        
+
         const endpoint = isLogin ? '/auth/login' : '/auth/register';
-        
+
         try {
             const res = await fetch(`${API_URL}${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
-            
+
             const data = await res.json();
-            
+
             if (res.ok && data.success) {
                 if (isLogin) {
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('username', data.username);
                     showNotification('Login successful!');
-                    setTimeout(() => window.location.href = 'dashboard.html', 1000);
+                    console.log('Login success, redirecting...');
+                    window.location.replace('dashboard.html');
                 } else {
                     showNotification('Registration successful! Please sign in.');
                     switchLink.click(); // Switch to login

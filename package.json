@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node backend/server.js",
     "build:frontend": "node build-frontend.js",
-    "start:frontend": "npx serve -s dist",
+    "start:frontend": "npx serve dist",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
