@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const express = require('express');
 const cors = require('cors');
 const http = require('http');
@@ -13,8 +13,10 @@ const fileRoutes = require('./routes/fileRoutes');
 const app = express();
 const server = http.createServer(app);
 
+const MONGO_URI = process.env.MONGO_URI;
+console.log('Loaded MONGO_URI:', MONGO_URI);
 // MongoDB Connection
-mongoose.connect(process.env.MONGO_URI).then(() => {
+mongoose.connect(MONGO_URI).then(() => {
     console.log('MongoDB Connected');
     const db = mongoose.connection.db;
     const gfs = new GridFSBucket(db, { bucketName: 'fs' });

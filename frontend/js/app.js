@@ -1,4 +1,5 @@
-const API_URL = 'http://localhost:5000/api';
+const BACKEND_URL = '__BACKEND_URL__';
+const API_URL = `${BACKEND_URL}/api`;
 let currentFolder = '';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -14,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('userAvatar').innerText = username.charAt(0).toUpperCase();
 
     // Socket.io setup
-    const socket = io('http://localhost:5000');
+    const socket = io(BACKEND_URL);
     socket.emit('join_room', username);
     
     socket.on('file_updated', (data) => {

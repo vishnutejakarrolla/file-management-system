@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build:frontend",
+  "outputDirectory": "dist",
+  "env": {
+    "BACKEND_URL": "https://file-management-system-81o0.onrender.com/"
+  }
+}
