@@ -163,6 +163,22 @@
         </div>
     </div>
 
+    <!-- Move Modal -->
+    <div class="modal-overlay" id="moveModal">
+        <div class="modal">
+            <h3>Move Item</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;" id="moveItemNameDisplay"></p>
+            <div class="input-group">
+                <label for="moveTargetFolder" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Target Folder (leave blank for root)</label>
+                <input type="text" id="moveTargetFolder" placeholder="e.g. Folder A/Subfolder">
+            </div>
+            <div class="modal-actions">
+                <button class="btn" id="cancelMoveBtn">Cancel</button>
+                <button class="btn btn-primary" id="confirmMoveBtn">Move Here</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Notifications -->
     <div class="notification-container" id="notificationContainer"></div>
 

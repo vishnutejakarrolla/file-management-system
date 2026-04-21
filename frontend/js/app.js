@@ -174,6 +174,21 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('copyTargetName').value = '';
     });
 
+    // Move Modal
+    const moveModal = document.getElementById('moveModal');
+    document.getElementById('cancelMoveBtn').addEventListener('click', () => {
+        moveModal.classList.remove('active');
+    });
+
+    document.getElementById('confirmMoveBtn').addEventListener('click', async () => {
+        const targetFolder = document.getElementById('moveTargetFolder').value;
+        const sourcePath = document.getElementById('confirmMoveBtn').dataset.sourcePath;
+        
+        await moveItem(sourcePath, targetFolder);
+        moveModal.classList.remove('active');
+        document.getElementById('moveTargetFolder').value = '';
+    });
+
     // Inline Copy Bar
     document.getElementById('inlineCopyBtn').addEventListener('click', async () => {
         const sourcePath = document.getElementById('inlineCopySource').value;
@@ -368,6 +383,7 @@ function renderFiles(files) {
                 <button class="btn-icon" onclick="toggleStar('${file.name}', event)" title="Star"><i class="fas fa-star" style="color: gold;"></i></button>
                 ${!file.isDir && file.name.endsWith('.txt') ? `<button class="btn-icon" onclick="openEditor('${file.name}', event)" title="Edit"><i class="fas fa-edit"></i></button>` : ''}
                 <button class="btn-icon" onclick="openCopy('${file.name}', event)" title="Copy"><i class="fas fa-copy"></i></button>
+                <button class="btn-icon" onclick="openMoveModal('${file.name}', event)" title="Move"><i class="fas fa-arrows-alt"></i></button>
                 <button class="btn-icon" onclick="openShare('${file.name}', event)" title="Share"><i class="fas fa-share-alt"></i></button>
                 ${!file.isDir ? `<button class="btn-icon" onclick="downloadFile('${file.name}', event)" title="Download"><i class="fas fa-download"></i></button>` : ''}
                 <button class="btn-icon" style="color:var(--danger-color)" onclick="deleteFile('${file.name}', event)" title="Delete"><i class="fas fa-trash"></i></button>
@@ -638,6 +654,40 @@ function openCopy(filename, event) {
     
     document.getElementById('copyTargetName').value = targetPath;
     document.getElementById('copyModal').classList.add('active');
+}
+
+// Open Move Modal
+function openMoveModal(filename, event) {
+    event.stopPropagation();
+    const sourcePath = currentFolder ? `${currentFolder}/${filename}` : filename;
+    document.getElementById('moveItemNameDisplay').innerText = `Moving: ${filename}`;
+    document.getElementById('confirmMoveBtn').dataset.sourcePath = sourcePath;
+    document.getElementById('moveTargetFolder').value = currentFolder;
+    document.getElementById('moveModal').classList.add('active');
+}
+
+// Move Item
+async function moveItem(sourcePath, targetFolder) {
+    const token = localStorage.getItem('token');
+    try {
+        const res = await fetch(`${API_URL}/files/move`, {
+            method: 'POST',
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ sourcePath, targetFolder })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showNotification('Item moved successfully');
+        } else {
+            showNotification(data.msg, 'error');
+        }
+    } catch (err) {
+        console.error(err);
+        showNotification('Failed to move item', 'error');
+    }
 }
 
 // Copy Item

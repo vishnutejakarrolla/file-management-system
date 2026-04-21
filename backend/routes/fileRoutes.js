@@ -20,5 +20,6 @@ router.post('/copy', fileController.copyFile);
 router.get('/recent', fileController.getRecent);
 router.get('/starred', fileController.getStarred);
 router.post('/toggle-star', fileController.toggleStar);
+router.post('/move', fileController.moveItem);
 
 module.exports = router;

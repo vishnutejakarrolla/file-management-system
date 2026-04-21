@@ -448,3 +448,75 @@ exports.getStarred = async (req, res) => {
         res.status(500).json({ success: false });
     }
 };
+
+// Move Item (File or Folder)
+exports.moveItem = async (req, res) => {
+    const username = req.user.username;
+    const { sourcePath, targetFolder } = req.body;
+
+    if (sourcePath === undefined || targetFolder === undefined) {
+        return res.status(400).json({ success: false, msg: 'Source and target required' });
+    }
+
+    const srcParts = sourcePath.split('/');
+    const srcBase = srcParts.pop();
+    const srcFolder = srcParts.join('/');
+
+    try {
+        const srcDoc = await File.findOne({ owner: username, parentFolder: srcFolder, name: srcBase });
+        if (!srcDoc) return res.status(404).json({ success: false, msg: 'Source item not found' });
+
+        // Prevent moving into itself or subfolders
+        if (srcDoc.isDir) {
+            const oldPrefix = srcFolder ? `${srcFolder}/${srcBase}` : srcBase;
+            if (targetFolder === oldPrefix || targetFolder.startsWith(`${oldPrefix}/`)) {
+                return res.status(400).json({ success: false, msg: 'Cannot move a folder into itself' });
+            }
+        }
+
+        // Check if target folder exists (if not root)
+        if (targetFolder !== '') {
+            const targetParts = targetFolder.split('/');
+            const targetBase = targetParts.pop();
+            const targetParent = targetParts.join('/');
+            const targetDir = await File.findOne({ owner: username, parentFolder: targetParent, name: targetBase, isDir: true });
+            if (!targetDir) return res.status(404).json({ success: false, msg: 'Target folder not found' });
+        }
+
+        // Check for name collision in target
+        const existing = await File.findOne({ owner: username, parentFolder: targetFolder, name: srcBase });
+        if (existing) return res.status(400).json({ success: false, msg: 'Item with this name already exists in target folder' });
+
+        // Update the item
+        const oldParentFolder = srcDoc.parentFolder;
+        srcDoc.parentFolder = targetFolder;
+        await srcDoc.save();
+
+        // Update children if it's a folder
+        if (srcDoc.isDir) {
+            const oldPrefix = oldParentFolder ? `${oldParentFolder}/${srcBase}` : srcBase;
+            const newPrefix = targetFolder ? `${targetFolder}/${srcBase}` : srcBase;
+            
+            // Find all children that start with the old prefix
+            // We use regex to match the path precisely
+            const children = await File.find({ 
+                owner: username, 
+                parentFolder: new RegExp('^' + oldPrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) 
+            });
+
+            for (let child of children) {
+                child.parentFolder = child.parentFolder.replace(oldPrefix, newPrefix);
+                await child.save();
+            }
+        }
+
+        if (req.app.get('io')) {
+            req.app.get('io').to(username).emit('file_updated', { msg: 'Item moved successfully' });
+        }
+
+        res.json({ success: true, msg: 'Item moved successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, msg: 'Move failed' });
+    }
+};
