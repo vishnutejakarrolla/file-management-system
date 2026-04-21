@@ -202,6 +202,13 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('inlineCopySource').value = '';
         document.getElementById('inlineCopyTarget').value = '';
     });
+
+    // Preview Modal
+    const previewModal = document.getElementById('previewModal');
+    document.getElementById('closePreviewBtn').addEventListener('click', () => {
+        previewModal.classList.remove('active');
+        document.getElementById('previewContent').innerHTML = '';
+    });
     
     // Setup Tabs
     let currentTab = 'drive';
@@ -381,6 +388,7 @@ function renderFiles(files) {
             </div>
             <div class="file-actions">
                 <button class="btn-icon" onclick="toggleStar('${file.name}', event)" title="Star"><i class="fas fa-star" style="color: gold;"></i></button>
+                ${!file.isDir && isPreviewable(file.name) ? `<button class="btn-icon" onclick="openPreview('${file.name}', event)" title="Preview"><i class="fas fa-eye"></i></button>` : ''}
                 ${!file.isDir && file.name.endsWith('.txt') ? `<button class="btn-icon" onclick="openEditor('${file.name}', event)" title="Edit"><i class="fas fa-edit"></i></button>` : ''}
                 <button class="btn-icon" onclick="openCopy('${file.name}', event)" title="Copy"><i class="fas fa-copy"></i></button>
                 <button class="btn-icon" onclick="openMoveModal('${file.name}', event)" title="Move"><i class="fas fa-arrows-alt"></i></button>
@@ -396,6 +404,8 @@ function renderFiles(files) {
                 document.getElementById('currentPath').innerText = currentFolder;
                 loadFiles();
             };
+        } else if (isPreviewable(file.name)) {
+            card.onclick = () => openPreview(file.name);
         }
 
         grid.appendChild(card);
@@ -457,35 +467,24 @@ async function uploadFiles(files) {
 
 // Download File
 function downloadFile(filename, event) {
-    event.stopPropagation();
+    if (event) event.stopPropagation();
     const token = localStorage.getItem('token');
-    
     const filePath = currentFolder ? `${currentFolder}/${filename}` : filename;
-    const url = `${API_URL}/files/download?file=${encodeURIComponent(filePath)}`;
     
-    // Create an invisible link to trigger download with auth header not supported by <a> tags directly
-    // Instead we fetch the blob
-    fetch(url, {
-        headers: { 'Authorization': `Bearer ${token}` }
-    })
-    .then(res => {
-        if (!res.ok) throw new Error('Download failed');
-        return res.blob();
-    })
-    .then(blob => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-    })
-    .catch(err => {
-        console.error(err);
-        showNotification('Error downloading file', 'error');
-    });
+    // Using a direct URL with token in query param is much more reliable on mobile
+    // than fetching blobs and using createObjectURL.
+    const url = `${API_URL}/files/download?file=${encodeURIComponent(filePath)}&token=${encodeURIComponent(token)}`;
+    
+    // Create a temporary link and click it
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        document.body.removeChild(a);
+    }, 100);
 }
 
 // Delete File
@@ -739,4 +738,40 @@ async function toggleStar(filename, event) {
         console.error(err);
         showNotification('Failed to update star', 'error');
     }
+}
+
+// Preview File
+function isPreviewable(filename) {
+    const ext = filename.split('.').pop().toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm', 'ogg', 'mp3', 'wav', 'pdf'].includes(ext);
+}
+
+function openPreview(filename, event) {
+    if (event) event.stopPropagation();
+    
+    const token = localStorage.getItem('token');
+    const filePath = currentFolder ? `${currentFolder}/${filename}` : filename;
+    const url = `${API_URL}/files/view?file=${encodeURIComponent(filePath)}&token=${encodeURIComponent(token)}`;
+    
+    const previewModal = document.getElementById('previewModal');
+    const previewContent = document.getElementById('previewContent');
+    document.getElementById('previewTitle').innerText = filename;
+    
+    const ext = filename.split('.').pop().toLowerCase();
+    previewContent.innerHTML = '';
+    
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+        previewContent.innerHTML = `<img src="${url}" style="max-width: 100%; max-height: 80vh; object-fit: contain;">`;
+    } else if (['mp4', 'webm', 'ogg'].includes(ext)) {
+        previewContent.innerHTML = `<video controls autoplay style="max-width: 100%; max-height: 80vh;"><source src="${url}" type="video/${ext === 'ogv' ? 'ogg' : ext}"></video>`;
+    } else if (['mp3', 'wav'].includes(ext)) {
+        previewContent.innerHTML = `<audio controls autoplay><source src="${url}" type="audio/${ext === 'mp3' ? 'mpeg' : ext}"></audio>`;
+    } else if (ext === 'pdf') {
+        previewContent.innerHTML = `<iframe src="${url}" style="width: 100%; height: 80vh; border: none;"></iframe>`;
+    } else {
+        showNotification('Preview not available for this file type', 'info');
+        return;
+    }
+    
+    previewModal.classList.add('active');
 }

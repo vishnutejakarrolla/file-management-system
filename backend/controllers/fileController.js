@@ -5,47 +5,74 @@ const { encryptStream, decryptStream } = require('../utils/encryption');
 const File = require('../models/File');
 const User = require('../models/User');
 
-// Upload File (encrypt -> GridFS)
+// Upload Files (encrypt -> GridFS)
 exports.uploadFile = async (req, res) => {
     const username = req.user.username;
-    if (!req.file) return res.status(400).json({ success: false, msg: 'No file uploaded' });
-
+    const files = req.files;
+    
+    if (!files || files.length === 0) {
+        return res.status(400).json({ success: false, msg: 'No files uploaded' });
+    }
+ 
     const folder = req.body.folder || '';
-    const filename = req.file.originalname;
-
+    const results = [];
+    const errors = [];
+ 
     try {
-        const existing = await File.findOne({ owner: username, parentFolder: folder, name: filename });
-        if (existing) {
-            fs.unlinkSync(req.file.path);
-            return res.status(400).json({ success: false, msg: 'File already exists' });
-        }
-
         const gfs = req.app.get('gfs');
-        const uploadStream = gfs.openUploadStream(filename);
-        const readStream = fs.createReadStream(req.file.path);
-
-        await encryptStream(readStream, uploadStream);
-
-        const newFile = new File({
-            name: filename,
-            owner: username,
-            parentFolder: folder,
-            isDir: false,
-            size: req.file.size,
-            gridFsId: uploadStream.id
-        });
-        await newFile.save();
-
-        fs.unlinkSync(req.file.path);
-
-        if (req.app.get('io')) {
-            req.app.get('io').to(username).emit('file_updated', { msg: 'File uploaded' });
+        
+        for (const file of files) {
+            const filename = file.originalname;
+            
+            try {
+                const existing = await File.findOne({ owner: username, parentFolder: folder, name: filename });
+                if (existing) {
+                    fs.unlinkSync(file.path);
+                    errors.push(`${filename} already exists`);
+                    continue;
+                }
+ 
+                const uploadStream = gfs.openUploadStream(filename);
+                const readStream = fs.createReadStream(file.path);
+ 
+                await encryptStream(readStream, uploadStream);
+ 
+                const newFile = new File({
+                    name: filename,
+                    owner: username,
+                    parentFolder: folder,
+                    isDir: false,
+                    size: file.size,
+                    gridFsId: uploadStream.id,
+                    ms: Date.now()
+                });
+                await newFile.save();
+ 
+                fs.unlinkSync(file.path);
+                results.push(filename);
+            } catch (fileErr) {
+                console.error(`Error uploading ${filename}:`, fileErr);
+                if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+                errors.push(`Failed to upload ${filename}`);
+            }
         }
-        res.status(200).json({ success: true, msg: 'Uploaded successfully' });
+ 
+        if (req.app.get('io')) {
+            req.app.get('io').to(username).emit('file_updated', { msg: 'Files uploaded' });
+        }
+        
+        if (results.length > 0) {
+            res.status(200).json({ 
+                success: true, 
+                msg: `Successfully uploaded ${results.length} file(s)`,
+                errors: errors.length > 0 ? errors : undefined
+            });
+        } else {
+            res.status(400).json({ success: false, msg: 'No files were uploaded', errors });
+        }
     } catch (err) {
-        console.error(err);
-        if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-        res.status(500).json({ success: false, msg: 'Upload failed' });
+        console.error('General upload error:', err);
+        res.status(500).json({ success: false, msg: 'Upload process failed' });
     }
 };
 
@@ -97,6 +124,55 @@ exports.downloadFile = async (req, res) => {
         console.error(err);
         if (!res.headersSent) {
              res.status(500).json({ success: false, msg: 'Decryption failed' });
+        }
+    }
+};
+
+// View/Stream file (inline)
+exports.viewFile = async (req, res) => {
+    const username = req.user.username;
+    let filename = req.query.file;
+    const parts = filename.split('/');
+    const baseName = parts.pop();
+    const folder = parts.join('/');
+    
+    try {
+        const fileDoc = await File.findOne({ owner: username, parentFolder: folder, name: baseName });
+        if (!fileDoc || fileDoc.isDir) {
+             return res.status(404).send('File not found');
+        }
+        
+        const gfs = req.app.get('gfs');
+        const readStream = gfs.openDownloadStream(fileDoc.gridFsId);
+        
+        const ext = baseName.split('.').pop().toLowerCase();
+        let mimeType = 'application/octet-stream';
+        
+        const mimeMap = {
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'png': 'image/png',
+            'gif': 'image/gif',
+            'webp': 'image/webp',
+            'mp4': 'video/mp4',
+            'webm': 'video/webm',
+            'ogg': 'video/ogg',
+            'mp3': 'audio/mpeg',
+            'wav': 'audio/wav',
+            'pdf': 'application/pdf',
+            'txt': 'text/plain'
+        };
+        
+        if (mimeMap[ext]) mimeType = mimeMap[ext];
+        
+        res.setHeader('Content-Type', mimeType);
+        res.setHeader('Content-Disposition', 'inline');
+        
+        await decryptStream(readStream, res);
+    } catch (err) {
+        console.error(err);
+        if (!res.headersSent) {
+             res.status(500).send('Error viewing file');
         }
     }
 };

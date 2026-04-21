@@ -8,9 +8,10 @@ const upload = multer({ dest: 'backend/storage/temp/' });
 
 router.use(verifyToken); // Protect all file routes
 
-router.post('/upload', upload.single('file'), fileController.uploadFile);
+router.post('/upload', upload.array('file'), fileController.uploadFile);
 router.get('/list', fileController.getFiles);
 router.get('/download', fileController.downloadFile);
+router.get('/view', fileController.viewFile);
 router.delete('/file', fileController.deleteFile);
 router.post('/create-folder', fileController.createFolder);
 router.post('/save-text', fileController.saveText);
