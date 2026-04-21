@@ -181,6 +181,7 @@ body {
 .app-container {
     display: flex;
     height: 100vh;
+    height: 100dvh; /* Use dynamic viewport height for mobile browsers */
     overflow: hidden;
 }
 
@@ -404,6 +405,16 @@ body {
     font-size: 0.9rem;
 }
 
+.extras-bar {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    background: var(--input-bg);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--panel-border);
+}
+
 /* File Grid */
 .file-grid {
     display: grid;
@@ -468,6 +479,7 @@ body {
     opacity: 0;
     transition: opacity 0.2s;
     max-width: 80%;
+    z-index: 5;
 }
 
 .file-card:hover .file-actions,
@@ -479,11 +491,14 @@ body {
     .file-actions {
         position: static;
         opacity: 1;
-        margin-top: 1rem;
+        margin-top: auto;
         justify-content: flex-start;
         max-width: 100%;
         border-top: 1px solid var(--panel-border);
         padding-top: 0.5rem;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.3rem;
     }
 }
 
@@ -635,10 +650,15 @@ body {
 
     .top-navbar {
         padding: 0 1rem;
+        flex-shrink: 0;
+    }
+
+    .main-content {
+        min-height: 0; /* Important for flex scrolling */
     }
 
     .search-bar {
-        display: none; /* Hide search bar on mobile by default or make it expandable */
+        display: none;
     }
     
     .search-bar.active {
@@ -654,12 +674,14 @@ body {
 
     .file-area {
         padding: 1rem;
+        min-height: 0; /* Important for flex scrolling */
     }
 
     .section-header {
         flex-direction: column;
         align-items: flex-start;
-        gap: 1rem;
+        gap: 0.8rem;
+        margin-bottom: 1rem;
     }
 
     .actions {
@@ -670,41 +692,77 @@ body {
 
     .btn {
         white-space: nowrap;
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .dropzone {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .dropzone i {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .dropzone h3 {
+        font-size: 1rem;
+    }
+
+    .extras-bar {
+        flex-direction: column;
+        padding: 0.8rem;
+        gap: 0.6rem;
+        margin-bottom: 1rem;
+    }
+
+    .extras-bar input {
+        width: 100%;
+        font-size: 0.9rem;
     }
 
     .file-grid {
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 1rem;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 0.8rem;
     }
 
     .file-card {
-        padding: 0.8rem;
+        padding: 0.6rem;
     }
 
     .file-icon {
-        font-size: 1.8rem;
-        margin-bottom: 0.5rem;
+        font-size: 1.6rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .file-name {
+        font-size: 0.85rem;
+    }
+
+    .file-meta {
+        font-size: 0.75rem;
     }
 
     .file-actions {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 0.4rem;
+        gap: 0.3rem;
         width: 100%;
+        margin-top: auto;
+        opacity: 1;
+        position: static;
+        border-top: 1px solid var(--panel-border);
+        padding-top: 0.4rem;
     }
 
     .file-actions .btn-icon {
         width: 100%;
-        height: 36px;
+        height: 36px; /* Slightly larger for touch */
+        background: var(--input-bg);
         display: flex;
         justify-content: center;
         align-items: center;
-        background: var(--input-bg);
-        border: 1px solid var(--panel-border);
-    }
-
-    .extras-bar {
-        flex-direction: column;
     }
 
     .modal {
@@ -721,10 +779,10 @@ body {
     }
     
     .user-profile span {
-        display: none; /* Hide username on very small screens */
+        display: none;
     }
     
     .file-grid {
-        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     }
 }

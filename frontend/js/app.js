@@ -1,4 +1,12 @@
-const BACKEND_URL = '__BACKEND_URL__';
+// Handle dynamic backend URL for local network testing
+let BACKEND_URL = '__BACKEND_URL__';
+if (BACKEND_URL === 'http://localhost:5000' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    // If we're on a mobile device or another computer on the network,
+    // automatically use the same hostname but port 5000
+    BACKEND_URL = `http://${window.location.hostname}:5000`;
+    console.log('Dynamic Backend URL detected:', BACKEND_URL);
+}
+
 const API_URL = `${BACKEND_URL}/api`;
 let currentFolder = '';
 
